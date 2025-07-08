@@ -3,39 +3,48 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 
 import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
-import AdminDashboard from "./components/dashboards/AdminDashboard";
-import ManagerDashboard from "./components/dashboards/ManagerDashboard";
-import StaffDashboard from "./components/dashboards/StaffDashboard";
-import { Sidebar } from "./components/layouts/Sidebar";
-import { Header } from "./components/layouts/Header";
+import DashboardLayout from "./components/layout/DashboardLayout";
+import BusinessDetails from "./components/business/BusinessDetails/BusinessDetails";
+import BusinessList from "./components/business/BusinessList";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import StaffDashboard from "./pages/staff/StaffDashboard";
+import ManagerDashboard from "./pages/manager/ManagerDashboard";
 
-// Auth Check
-const isAuthenticated = () => {
-  return !!localStorage.getItem("authToken");
+// Temporary simple pages
+const TaskPage = () => <div><h2>Tasks Page</h2></div>;
+const DeadlinePage = () => <div><h2>Deadlines Page</h2></div>;
+
+// Helper to safely parse user from localStorage
+const getUserFromLocalStorage = () => {
+  try {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser || storedUser === "undefined" || storedUser === "null") {
+      return null;
+    }
+    return JSON.parse(storedUser);
+  } catch (error) {
+    console.error("Error parsing user from localStorage:", error);
+    return null;
+  }
 };
 
-// ProtectedRoute wrapper
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return isAuthenticated() ? <>{children}</> : <Navigate to="/login" replace />;
+// Protected route component
+const ProtectedRoute = ({ children, role }: { children: React.ReactNode; role: string }) => {
+  const token = localStorage.getItem("authToken");
+  const user = getUserFromLocalStorage();
+
+  if (!token || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (role && user.role !== role) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
 };
 
-//Layout with Sidebar withHeader
-const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div style={{ display: "flex", height: "100vh" }}>
-    {/* Sidebar */}
-    <Sidebar />
-
-    {/* Right Section: Header + Content */}
-    <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-      <Header />
-      <div style={{ flex: 1, padding: "16px", background: "#f9f9f9" }}>
-        {children}
-      </div>
-    </div>
-  </div>
-);
-
-const App: React.FC = () => {
+function App() {
   return (
     <Router>
       <Routes>
@@ -43,41 +52,48 @@ const App: React.FC = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Protected Routes */}
-        <Route
-          path="/admin-dashboard"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
+        {/* Dashboard Layout for all routes after login */}
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          {/* Admin */}
+          <Route
+            path="admin"
+            element={
+              <ProtectedRoute role="admin">
                 <AdminDashboard />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/manager-dashboard"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <ManagerDashboard />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/staff-dashboard"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Staff */}
+          <Route
+            path="staff"
+            element={
+              <ProtectedRoute role="staff">
                 <StaffDashboard />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+              </ProtectedRoute>
+            }
+          />
+          {/* Manager */}
+          <Route
+            path="manager"
+            element={
+              <ProtectedRoute role="manager">
+                <ManagerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          {/* Common pages */}
+          <Route path="clients" element={<BusinessList />} />
+          <Route path="business" element={<BusinessList />} />
+          <Route path="business/:businessId" element={<BusinessDetails />} />
+          <Route path="tasks" element={<TaskPage />} />
+          <Route path="deadlines" element={<DeadlinePage />} />
+
+          {/* Default → Go to admin page by default */}
+          <Route path="" element={<Navigate to="admin" />} />
+        </Route>
       </Routes>
     </Router>
   );
-};
+}
 
 export default App;
