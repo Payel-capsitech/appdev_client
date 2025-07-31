@@ -22,12 +22,14 @@ const Login: React.FC = () => {
       const role = payload.role;
 
       const user = {
-      role: payload.role,
-      email: payload.email || '', 
-    };
+        role: payload.role,
+        email: payload.email || '',
+        username: payload.unique_name || payload.name || '' 
+      };
 
-    // Save user in localStorage
-    localStorage.setItem('user', JSON.stringify(user));
+
+      // Save user in localStorage
+      localStorage.setItem('user', JSON.stringify(user));
 
       if (role === 'admin') {
         navigate('/dashboard/admin');

@@ -1,20 +1,19 @@
+
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-
 import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
 import DashboardLayout from "./components/layout/DashboardLayout";
-import BusinessDetails from "./components/business/BusinessDetails/BusinessDetails";
-import BusinessList from "./components/business/BusinessList";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import StaffDashboard from "./pages/staff/StaffDashboard";
 import ManagerDashboard from "./pages/manager/ManagerDashboard";
+import BusinessList from "./components/business/BusinessList";
+import BusinessDetails from "./components/business/BusinessDetails/BusinessDetails";
+import InvoicesPage from "./components/invoice/InvoicePage";
 
-// Temporary simple pages
 const TaskPage = () => <div><h2>Tasks Page</h2></div>;
 const DeadlinePage = () => <div><h2>Deadlines Page</h2></div>;
 
-// Helper to safely parse user from localStorage
 const getUserFromLocalStorage = () => {
   try {
     const storedUser = localStorage.getItem("user");
@@ -28,7 +27,6 @@ const getUserFromLocalStorage = () => {
   }
 };
 
-// Protected route component
 const ProtectedRoute = ({ children, role }: { children: React.ReactNode; role: string }) => {
   const token = localStorage.getItem("authToken");
   const user = getUserFromLocalStorage();
@@ -52,9 +50,23 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Dashboard Layout for all routes after login */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          {/* Admin */}
+        {/* Routes after login with Dashboard layout */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute role="">
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route
+            index
+            element={
+              <ProtectedRoute role="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="admin"
             element={
@@ -63,7 +75,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* Staff */}
           <Route
             path="staff"
             element={
@@ -72,7 +83,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* Manager */}
           <Route
             path="manager"
             element={
@@ -81,16 +91,29 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* Common pages */}
+          <Route
+            path="business"
+            element={
+              <ProtectedRoute role="admin">
+                <BusinessList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="business/:businessId"
+            element={
+              <ProtectedRoute role="">
+                <BusinessDetails />
+              </ProtectedRoute>
+            }
+          />
           <Route path="clients" element={<BusinessList />} />
-          <Route path="business" element={<BusinessList />} />
-          <Route path="business/:businessId" element={<BusinessDetails />} />
+          <Route path="Invoices" element={<InvoicesPage />} />
           <Route path="tasks" element={<TaskPage />} />
           <Route path="deadlines" element={<DeadlinePage />} />
-
-          {/* Default → Go to admin page by default */}
-          <Route path="" element={<Navigate to="admin" />} />
         </Route>
+
+        <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
     </Router>
   );

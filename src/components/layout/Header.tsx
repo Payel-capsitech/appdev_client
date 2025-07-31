@@ -2,37 +2,46 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   Stack,
   TextField,
-  IconButton,
   Text,
   Callout,
   DirectionalHint,
   DefaultButton,
+  Persona,
+  PersonaSize,
+  IStackStyles,
+  Dialog,
+  DialogType,
+  DialogFooter,
+  PrimaryButton,
 } from "@fluentui/react";
 import { useNavigate } from "react-router-dom";
 
-
-const headerStyles = {
+const headerStackStyles: IStackStyles = {
   root: {
-    height: 50,
+    height: 35,
     backgroundColor: "#0078D4",
-    padding: "0 16px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    color: "#fff",
+    padding: 20,
+    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+    position: "sticky",
+    top: 0,
+    zIndex: 1000,
   },
-  section: {
+};
+
+const sectionStackStyles: IStackStyles = {
+  root: {
     display: "flex",
     alignItems: "center",
+    flexWrap: "nowrap",
   },
 };
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
   const [isCalloutVisible, setIsCalloutVisible] = useState(false);
-  const buttonRef = useRef<HTMLDivElement>(null);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const personaRef = useRef<HTMLDivElement>(null);
 
-  // Get user data safely from localStorage
   const [user, setUser] = useState<{ email: string; role: string }>({
     email: "Guest",
     role: "guest",
@@ -43,67 +52,142 @@ export const Header: React.FC = () => {
       const storedUser = localStorage.getItem("user");
       if (storedUser && storedUser !== "undefined") {
         const parsed = JSON.parse(storedUser);
-        setUser({ email: parsed.email, role: parsed.role });
+        if (parsed?.email && parsed?.role) {
+          setUser({ email: parsed.email, role: parsed.role });
+        }
       }
     } catch (err) {
       console.error("Error parsing user from localStorage:", err);
     }
   }, []);
 
-  const handleLogout = () => {
+  const handleLogoutConfirm = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("user");
+    setShowLogoutDialog(false);
     navigate("/login");
   };
 
   return (
-    <div style={headerStyles.root}>
-      <Stack horizontal verticalAlign="center" styles={{ root: headerStyles.section }}>
-        <Text variant="mediumPlus" styles={{ root: { color: "#fff" } }}>
-          Acting Office - Dev
-        </Text>
-      </Stack>
+    <>
+      <Stack
+        horizontal
+        verticalAlign="center"
+        horizontalAlign="space-between"
+        styles={headerStackStyles}
+      >
+        <Stack horizontal verticalAlign="center" styles={sectionStackStyles}>
+          <Text
+            variant="large"
+            styles={{ root: { color: "#fff", fontWeight: 500 } }}
+          >
+            Acting Office - Dev
+          </Text>
+        </Stack>
 
-      <Stack horizontal verticalAlign="center" styles={{ root: headerStyles.section }} tokens={{ childrenGap: 12 }}>
-        <TextField placeholder="Ctrl + K" styles={{ field: { color: "#000" } }} />
-
-        <div ref={buttonRef}>
-          <IconButton
-            iconProps={{ iconName: "Contact" }}
-            title="Profile"
-            ariaLabel="Profile"
-            onClick={() => setIsCalloutVisible(!isCalloutVisible)}
+        <Stack
+          horizontal
+          verticalAlign="center"
+          tokens={{ childrenGap: 12 }}
+          styles={sectionStackStyles}
+        >
+          <TextField
+            placeholder="Ctrl + K"
             styles={{
-              root: { color: "#fff" },
-              rootHovered: { backgroundColor: "#106EBE", color: "#fff" },
+              root: { width: 200 },
+              fieldGroup: {
+                borderRadius: 6,
+                border: "1px solid #ccc",
+              },
             }}
           />
-        </div>
-
-        {isCalloutVisible && (
-          <Callout
-            target={buttonRef.current}
-            onDismiss={() => setIsCalloutVisible(false)}
-            directionalHint={DirectionalHint.bottomRightEdge}
-            gapSpace={8}
-            setInitialFocus
+          
+          <Stack
+            horizontal
+            verticalAlign="center"
+            styles={{ root: { position: "relative" } }}
           >
-            <div style={{ padding: 16, minWidth: 200 }}>
-              <Text variant="mediumPlus" block>Email: {user.email}</Text>
-
-              <Text variant="mediumPlus" block style={{ marginTop: 8 }}>
-                Role:{user.role}
-              </Text>
-
-              <DefaultButton 
-                text="Logout"
-                onClick={handleLogout}
-                styles={{ root: { marginTop: 12 } }}
+            <div
+              ref={personaRef}
+              onMouseDown={(e) => {
+                if (
+                  personaRef.current &&
+                  personaRef.current.contains(e.target as Node)
+                ) {
+                  setIsCalloutVisible((prev) => !prev);
+                }
+              }}
+              style={{
+                cursor: "pointer",
+                borderRadius: 20,
+                border: "1px solid white",
+              }}
+            >
+              <Persona
+                text={user.email}
+                secondaryText={user.role}
+                size={PersonaSize.size32}
+                hidePersonaDetails={true}
+                styles={{
+                  root: { backgroundColor: "transparent" },
+                  primaryText: { color: "#fff" },
+                  secondaryText: { color: "#f3f2f1" },
+                }}
               />
             </div>
-          </Callout>
-        )}
+
+            {isCalloutVisible && personaRef.current && (
+              <Callout
+                target={personaRef.current}
+                onDismiss={() => setIsCalloutVisible(false)}
+                directionalHint={DirectionalHint.bottomRightEdge}
+                directionalHintFixed={true}
+                gapSpace={8}
+              >
+                <Stack
+                  tokens={{ childrenGap: 8 }}
+                  styles={{
+                    root: {
+                      padding: 16,
+                      minWidth: 180,
+                    },
+                  }}
+                >
+                  <Persona
+                    text={user.email}
+                    secondaryText={user.role}
+                    size={PersonaSize.size40}
+                  />
+                  <DefaultButton
+                    text="Logout"
+                    onClick={() => {
+                      setShowLogoutDialog(true);
+                      setIsCalloutVisible(false);
+                    }}
+                    styles={{ root: { marginTop: 8 } }}
+                  />
+                </Stack>
+              </Callout>
+            )}
+          </Stack>
+        </Stack>
       </Stack>
-    </div>
+
+      <Dialog
+        hidden={!showLogoutDialog}
+        onDismiss={() => setShowLogoutDialog(false)}
+        dialogContentProps={{
+          type: DialogType.normal,
+          subText: "Are you sure you want to logout?",
+        }}
+      >
+        <Stack >
+          <DialogFooter>
+            <DefaultButton onClick={() => setShowLogoutDialog(false)} text="Cancel" />
+            <PrimaryButton onClick={handleLogoutConfirm} text="Logout" />
+          </DialogFooter>
+        </Stack>
+      </Dialog>
+    </>
   );
 };

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Nav, INavLinkGroup, INavStyles, IconButton } from "@fluentui/react";
+import { Nav, INavLinkGroup, INavStyles, IconButton, Stack } from "@fluentui/react";
 import { useNavigate } from "react-router-dom";
 
 export const Sidebar: React.FC = () => {
@@ -22,7 +22,7 @@ export const Sidebar: React.FC = () => {
         {
           name: isCollapsed ? "" : "Clients",
           key: "clients",
-          icon: "People",
+          icon: "Suitcase",
           url: "#",
           onClick: (e?: React.MouseEvent<HTMLElement>) => {
             e?.preventDefault();
@@ -30,9 +30,19 @@ export const Sidebar: React.FC = () => {
           },
         },
         {
+          name: isCollapsed ? "" : "Invoices",
+          key: "Invoices",
+          icon: "ReportDocument",
+          url: "#",
+          onClick: (e?: React.MouseEvent<HTMLElement>) => {
+            e?.preventDefault();
+            navigate("/dashboard/Invoices");
+          },
+        },
+        {
           name: isCollapsed ? "" : "Tasks",
           key: "tasks",
-          icon: "TaskLogo",
+          icon: "TaskManager",
           url: "#",
           onClick: (e?: React.MouseEvent<HTMLElement>) => {
             e?.preventDefault();
@@ -57,30 +67,28 @@ export const Sidebar: React.FC = () => {
     root: {
       width: isCollapsed ? 60 : 220,
       height: "100vh",
+      borderRight: "1px solid #eee",
       boxSizing: "border-box",
-      border: "1px solid #eee",
       overflowX: "hidden",
       transition: "width 0.3s",
     },
-    groupContent: {
-      paddingLeft: isCollapsed ? 0 : 10,
-    },
-    navItems: {
-      paddingLeft: isCollapsed ? 0 : 10,
-    },
+    groupContent: { paddingLeft: isCollapsed ? 0 : 10 },
+    navItems: { paddingLeft: isCollapsed ? 0 : 10 },
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <div style={{ padding: "8px" }}>
+    <Stack verticalFill styles={{ root: { height: "100vh", margin: 0, padding: 0 } }}>
+      <Stack horizontal verticalAlign="center" styles={{ root: { justifyContent: "flex-start", paddingTop: 6,
+            paddingBottom: 6,
+            paddingLeft: isCollapsed ? 10 : 16 } }}>
         <IconButton
           iconProps={{ iconName: "GlobalNavButton" }}
           title="Toggle"
           ariaLabel="Toggle Sidebar"
           onClick={() => setIsCollapsed(!isCollapsed)}
         />
-      </div>
+      </Stack>
       <Nav groups={navLinkGroups} styles={navStyles} />
-    </div>
+    </Stack>
   );
 };
