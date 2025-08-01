@@ -13,7 +13,7 @@ import {
 } from "@fluentui/react";
 import { Formik, Form, FieldArray, FormikErrors } from "formik";
 import * as Yup from "yup";
-import API from "../../services/api";
+import useApi from "../../services/api";
 
 interface EditInvoicePanelProps {
   isOpen: boolean;
@@ -56,6 +56,7 @@ export default function EditInvoicePanel({
   invoice,
   onSuccess,
 }: EditInvoicePanelProps) {
+  const api = useApi();
   if (!invoice) return null;
 
   const initialServices: Service[] = Array.isArray(invoice.service)
@@ -79,7 +80,10 @@ export default function EditInvoicePanel({
         }}
         validationSchema={InvoiceSchema}
         onSubmit={async (values) => {
-          const totalAmount = values.services.reduce((sum, s) => sum + Number(s.amount || 0), 0);
+          const totalAmount = values.services.reduce(
+            (sum, s) => sum + Number(s.amount || 0),
+            0
+          );
           const payload = {
             service: values.services,
             amount: totalAmount,
@@ -89,7 +93,7 @@ export default function EditInvoicePanel({
           };
 
           try {
-            await API.post(`/invoice/update/${invoice.id}`, payload);
+            await api.post(`/invoice/update/${invoice.id}`, payload);
             onSuccess();
             onDismiss();
           } catch (err: any) {
@@ -98,42 +102,77 @@ export default function EditInvoicePanel({
           }
         }}
       >
-        {({ handleChange, values, setFieldValue, errors, touched, setFieldTouched }) => {
-          const subtotal = values.services.reduce((sum, s) => sum + Number(s.amount || 0), 0);
-          const vatAmount = (subtotal * Number(values.vatPercentage || 0)) / 100;
+        {({
+          handleChange,
+          values,
+          setFieldValue,
+          errors,
+          touched,
+          setFieldTouched,
+        }) => {
+          const subtotal = values.services.reduce(
+            (sum, s) => sum + Number(s.amount || 0),
+            0
+          );
+          const vatAmount =
+            (subtotal * Number(values.vatPercentage || 0)) / 100;
           const total = subtotal + vatAmount;
 
           return (
-            <Form style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 100px)" }}>
+            <Form
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                height: "calc(100vh - 100px)",
+              }}
+            >
               <div style={{ flex: 1, overflowY: "auto", paddingRight: 4 }}>
                 <Stack tokens={{ childrenGap: 15 }}>
-                  <TextField label="Business Name" value={invoice.businessName || ""} disabled />
+                  <TextField
+                    label="Business Name"
+                    value={invoice.businessName || ""}
+                    disabled
+                  />
 
                   <Stack horizontal tokens={{ childrenGap: 10 }}>
                     <DatePicker
                       placeholder="Start Date"
                       value={values.startDate}
-                      onSelectDate={(date) => setFieldValue("startDate", date ?? undefined)}
+                      onSelectDate={(date) =>
+                        setFieldValue("startDate", date ?? undefined)
+                      }
                       onBlur={() => setFieldTouched("startDate", true)}
                       firstDayOfWeek={DayOfWeek.Sunday}
                       style={{ width: 200 }}
                     />
                     <div style={{ position: "absolute", marginTop: 30 }}>
                       {touched.startDate && errors.startDate && (
-                        <Text variant="small" style={{ color: "brown" }}>{errors.startDate}</Text>
+                        <Text variant="small" style={{ color: "brown" }}>
+                          {errors.startDate}
+                        </Text>
                       )}
                     </div>
                     <DatePicker
                       placeholder="Due Date"
                       value={values.dueDate}
-                      onSelectDate={(date) => setFieldValue("dueDate", date ?? undefined)}
+                      onSelectDate={(date) =>
+                        setFieldValue("dueDate", date ?? undefined)
+                      }
                       onBlur={() => setFieldTouched("dueDate", true)}
                       firstDayOfWeek={DayOfWeek.Sunday}
                       style={{ width: 200 }}
                     />
-                    <div style={{ position: "absolute", marginTop: 30, marginLeft: 210 }}>
+                    <div
+                      style={{
+                        position: "absolute",
+                        marginTop: 30,
+                        marginLeft: 210,
+                      }}
+                    >
                       {touched.dueDate && errors.dueDate && (
-                        <Text variant="small" style={{ color: "brown" }}>{errors.dueDate}</Text>
+                        <Text variant="small" style={{ color: "brown" }}>
+                          {errors.dueDate}
+                        </Text>
                       )}
                     </div>
                   </Stack>
@@ -143,25 +182,38 @@ export default function EditInvoicePanel({
                       {({ push, remove }) => (
                         <>
                           {values.services.map((service, index) => (
-                            <Stack key={index} horizontal tokens={{ childrenGap: 10 }} horizontalAlign="space-between">
+                            <Stack
+                              key={index}
+                              horizontal
+                              tokens={{ childrenGap: 10 }}
+                              horizontalAlign="space-between"
+                            >
                               <TextField
                                 name={`services[${index}].name`}
                                 value={service.name}
                                 onChange={handleChange}
-                                styles={{ root: { width: "30%" }, field: { height: 32 } }}
+                                styles={{
+                                  root: { width: "30%" },
+                                  field: { height: 32 },
+                                }}
                                 placeholder="Service"
                                 errorMessage={
                                   touched.services &&
                                   touched.services[index] &&
                                   errors.services &&
-                                  (errors.services as FormikErrors<any>[])[index]?.name
+                                  (errors.services as FormikErrors<any>[])[
+                                    index
+                                  ]?.name
                                 }
                               />
                               <TextField
                                 name={`services[${index}].description`}
                                 value={service.description}
                                 onChange={handleChange}
-                                styles={{ root: { width: "50%" }, field: { height: 32 } }}
+                                styles={{
+                                  root: { width: "50%" },
+                                  field: { height: 32 },
+                                }}
                                 placeholder="Description"
                               />
                               <TextField
@@ -169,16 +221,25 @@ export default function EditInvoicePanel({
                                 type="number"
                                 value={service.amount?.toString() ?? ""}
                                 onChange={(e, newValue) => {
-                                  const amount = newValue === "" ? "" : Number(newValue);
-                                  setFieldValue(`services[${index}].amount`, amount);
+                                  const amount =
+                                    newValue === "" ? "" : Number(newValue);
+                                  setFieldValue(
+                                    `services[${index}].amount`,
+                                    amount
+                                  );
                                 }}
-                                styles={{ root: { width: "30%" }, field: { height: 32 } }}
+                                styles={{
+                                  root: { width: "30%" },
+                                  field: { height: 32 },
+                                }}
                                 placeholder="Amount"
                                 errorMessage={
                                   touched.services &&
                                   touched.services[index] &&
                                   errors.services &&
-                                  (errors.services as FormikErrors<any>[])[index]?.amount
+                                  (errors.services as FormikErrors<any>[])[
+                                    index
+                                  ]?.amount
                                 }
                               />
 
@@ -198,16 +259,31 @@ export default function EditInvoicePanel({
                           <PrimaryButton
                             text="Add"
                             iconProps={{ iconName: "Add" }}
-                            onClick={() => push({ name: "", description: "", amount: 0 })}
-                            styles={{ root: { width: 100, padding: "0 8px", alignSelf: "start" } }}
+                            onClick={() =>
+                              push({ name: "", description: "", amount: 0 })
+                            }
+                            styles={{
+                              root: {
+                                width: 100,
+                                padding: "0 8px",
+                                alignSelf: "start",
+                              },
+                            }}
                           />
                         </>
                       )}
                     </FieldArray>
                   </Stack>
 
-                  <Stack tokens={{ childrenGap: 10 }} styles={{ root: { width: 250, alignSelf: "end" } }}>
-                    <TextField label="Amount" value={subtotal.toFixed(2)} readOnly />
+                  <Stack
+                    tokens={{ childrenGap: 10 }}
+                    styles={{ root: { width: 250, alignSelf: "end" } }}
+                  >
+                    <TextField
+                      label="Amount"
+                      value={subtotal.toFixed(2)}
+                      readOnly
+                    />
                     <TextField
                       label="VAT %"
                       name="vatPercentage"
@@ -215,19 +291,29 @@ export default function EditInvoicePanel({
                       value={values.vatPercentage.toString()}
                       onChange={handleChange}
                     />
-                    <TextField label="VAT Amount" value={vatAmount.toFixed(2)} readOnly />
-                    <TextField label="Total" value={total.toFixed(2)} readOnly />
+                    <TextField
+                      label="VAT Amount"
+                      value={vatAmount.toFixed(2)}
+                      readOnly
+                    />
+                    <TextField
+                      label="Total"
+                      value={total.toFixed(2)}
+                      readOnly
+                    />
                   </Stack>
                 </Stack>
               </div>
 
-              <div style={{
-                padding: "12px 0",
-                backgroundColor: "#fff",
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 10,
-              }}>
+              <div
+                style={{
+                  padding: "12px 0",
+                  backgroundColor: "#fff",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 10,
+                }}
+              >
                 <DefaultButton text="Cancel" onClick={onDismiss} />
                 <PrimaryButton type="submit" text="Save" />
               </div>

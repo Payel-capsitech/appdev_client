@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   Stack,
   TextField,
@@ -15,6 +15,7 @@ import {
   PrimaryButton,
 } from "@fluentui/react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const headerStackStyles: IStackStyles = {
   root: {
@@ -41,29 +42,9 @@ export const Header: React.FC = () => {
   const [isCalloutVisible, setIsCalloutVisible] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const personaRef = useRef<HTMLDivElement>(null);
-
-  const [user, setUser] = useState<{ email: string; role: string }>({
-    email: "Guest",
-    role: "guest",
-  });
-
-  useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser && storedUser !== "undefined") {
-        const parsed = JSON.parse(storedUser);
-        if (parsed?.email && parsed?.role) {
-          setUser({ email: parsed.email, role: parsed.role });
-        }
-      }
-    } catch (err) {
-      console.error("Error parsing user from localStorage:", err);
-    }
-  }, []);
-
+  const { user, logout } = useAuth();
   const handleLogoutConfirm = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("user");
+    logout();
     setShowLogoutDialog(false);
     navigate("/login");
   };
@@ -101,7 +82,7 @@ export const Header: React.FC = () => {
               },
             }}
           />
-          
+
           <Stack
             horizontal
             verticalAlign="center"
@@ -124,8 +105,8 @@ export const Header: React.FC = () => {
               }}
             >
               <Persona
-                text={user.email}
-                secondaryText={user.role}
+                text={user?.email || "Guest"}
+                secondaryText={user?.role || "guest"}
                 size={PersonaSize.size32}
                 hidePersonaDetails={true}
                 styles={{
@@ -154,8 +135,8 @@ export const Header: React.FC = () => {
                   }}
                 >
                   <Persona
-                    text={user.email}
-                    secondaryText={user.role}
+                    text={user?.email || "Guest"}
+                    secondaryText={user?.role || "guest"}
                     size={PersonaSize.size40}
                   />
                   <DefaultButton
@@ -181,9 +162,12 @@ export const Header: React.FC = () => {
           subText: "Are you sure you want to logout?",
         }}
       >
-        <Stack >
+        <Stack>
           <DialogFooter>
-            <DefaultButton onClick={() => setShowLogoutDialog(false)} text="Cancel" />
+            <DefaultButton
+              onClick={() => setShowLogoutDialog(false)}
+              text="Cancel"
+            />
             <PrimaryButton onClick={handleLogoutConfirm} text="Logout" />
           </DialogFooter>
         </Stack>

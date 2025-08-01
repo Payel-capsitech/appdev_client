@@ -9,7 +9,8 @@ import {
   Persona,
   PersonaSize,
 } from "@fluentui/react";
-import API from "../../../services/api";
+// import API from "../../../services/api";
+import useApi from "../../../services/api";
 import ProfileCard from "./ProfileCard";
 import History from "./History";
 import Billing from "../../invoice/Billing";
@@ -48,9 +49,10 @@ export default function BusinessDetails() {
   const [selectedInvoice] = useState<any>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const styles = useStyles;
+  const api = useApi();
 
   useEffect(() => {
-    API.get(`/business/${businessId}`)
+    api.get(`/business/${businessId}`)
       .then((res) => {
         setBusiness(res.data)
       })

@@ -24,6 +24,7 @@ import {
 import API from "../../services/api";
 import InvoicePanel from "./InvoicePanel";
 import InvoiceDetailsPanel from "./InvoiceDetailsPanel";
+import useApi from "../../services/api";
 
 export interface Invoice {
   id: string;
@@ -54,6 +55,7 @@ export interface BusinessAddress {
 
 const InvoicesPage = () => {
   const navigate = useNavigate();
+  const api = useApi();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showDetailsPanel, setShowDetailsPanel] = useState(false);
@@ -85,7 +87,7 @@ const InvoicesPage = () => {
   const fetchInvoices = async () => {
     setLoading(true);
     try {
-      const res = await API.get(`/invoice/PaginatedInvoice`, {
+      const res = await api.get(`/invoice/PaginatedInvoice`, {
         params: {
           page,
           pageSize,
@@ -123,7 +125,7 @@ const InvoicesPage = () => {
   const deleteInvoice = async () => {
     if (!invoiceToDelete) return;
     try {
-      await API.post(`/invoice/delete/${invoiceToDelete.id}`);
+      await api.post(`/invoice/delete/${invoiceToDelete.id}`);
       setIsDeleteDialogOpen(false);
       fetchInvoices();
     } catch (err) {
@@ -132,7 +134,7 @@ const InvoicesPage = () => {
   };
 
   const fetchBusinesses = async () => {
-    const res = await API.get("/business/user-businesses");
+    const res = await api.get("/business/user-businesses");
     const options = res.data.map((business: any) => ({
       key: business.businessId,
       text: business.name,

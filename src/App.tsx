@@ -1,6 +1,10 @@
-
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -10,28 +14,57 @@ import ManagerDashboard from "./pages/manager/ManagerDashboard";
 import BusinessList from "./components/business/BusinessList";
 import BusinessDetails from "./components/business/BusinessDetails/BusinessDetails";
 import InvoicesPage from "./components/invoice/InvoicePage";
+import { useAuth } from "./context/AuthContext";
 
-const TaskPage = () => <div><h2>Tasks Page</h2></div>;
-const DeadlinePage = () => <div><h2>Deadlines Page</h2></div>;
+const TaskPage = () => (
+  <div>
+    <h2>Tasks Page</h2>
+  </div>
+);
+const DeadlinePage = () => (
+  <div>
+    <h2>Deadlines Page</h2>
+  </div>
+);
 
-const getUserFromLocalStorage = () => {
-  try {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser || storedUser === "undefined" || storedUser === "null") {
-      return null;
-    }
-    return JSON.parse(storedUser);
-  } catch (error) {
-    console.error("Error parsing user from localStorage:", error);
-    return null;
-  }
-};
+// const getUserFromLocalStorage = () => {
+//   try {
+//     const storedUser = localStorage.getItem("user");
+//     if (!storedUser || storedUser === "undefined" || storedUser === "null") {
+//       return null;
+//     }
+//     return JSON.parse(storedUser);
+//   } catch (error) {
+//     console.error("Error parsing user from localStorage:", error);
+//     return null;
+//   }
+// };
 
-const ProtectedRoute = ({ children, role }: { children: React.ReactNode; role: string }) => {
-  const token = localStorage.getItem("authToken");
-  const user = getUserFromLocalStorage();
+// const ProtectedRoute = ({ children, role }: { children: React.ReactNode; role: string }) => {
+//   const token = localStorage.getItem("authToken");
+//   const user = getUserFromLocalStorage();
 
-  if (!token || !user) {
+//   if (!token || !user) {
+//     return <Navigate to="/login" replace />;
+//   }
+
+//   if (role && user.role !== role) {
+//     return <Navigate to="/login" replace />;
+//   }
+
+//   return <>{children}</>;
+// };
+
+const ProtectedRoute = ({
+  children,
+  role,
+}: {
+  children: React.ReactNode;
+  role?: string;
+}) => {
+  const { user, token } = useAuth();
+
+  if (!user || !token) {
     return <Navigate to="/login" replace />;
   }
 

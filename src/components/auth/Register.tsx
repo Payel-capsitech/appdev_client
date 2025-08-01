@@ -2,7 +2,8 @@ import React from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate, Link } from 'react-router-dom';
-import API from '../../services/api';
+// import API from '../../services/api';
+import useApi from '../../services/api';
 
 const RegisterSchema = Yup.object().shape({
   username: Yup.string().required('Username is required'),
@@ -16,6 +17,7 @@ const RegisterSchema = Yup.object().shape({
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
+  const api = useApi();
 
   const handleRegister = async (values: { username: string; email: string; password: string; role: string }) => {
   try {
@@ -33,7 +35,7 @@ const Register: React.FC = () => {
       role: roleMap[values.role.toLowerCase()], // convert to enum value
     };
 
-    await API.post('/auth/register', payload);
+    await api.post('/auth/register', payload);
     alert('Registration successful');
     navigate('/login');
   } catch (err) {

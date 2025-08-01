@@ -20,10 +20,10 @@ import {
   Spinner,
   SpinnerSize
 } from "@fluentui/react";
-import API from "../../services/api";
 import InvoiceDetailsPanel from "./InvoiceDetailsPanel";
 import InvoicePanel from "./InvoicePanel";
 import EditInvoicePanel from "./EditInvoicePanel";
+import useApi from "../../services/api";
 
 export interface Invoice {
   id: string;
@@ -63,6 +63,7 @@ export interface BillingProps {
 }
 
 export default function Billing({ businessId, businessName, businessAddress }: BillingProps) {
+  const api = useApi();
   console.log("Billingsssss", businessName, businessId, businessAddress);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [search, setSearch] = useState("");
@@ -80,7 +81,7 @@ export default function Billing({ businessId, businessName, businessAddress }: B
   });
 
   const fetchInvoices = useCallback(() => {
-    API.get(`/invoice/byBusiness/${businessId}`)
+    api.get(`/invoice/byBusiness/${businessId}`)
       .then((res: { data: Invoice[] }) => {
         setLoading(false);
         if (Array.isArray(res.data)) {
@@ -369,7 +370,7 @@ export default function Billing({ businessId, businessName, businessAddress }: B
             onClick={async () => {
               if (!invoiceToDelete) return;
               try {
-                await API.post(`/invoice/delete/${invoiceToDelete.id}`);
+                await api.post(`/invoice/delete/${invoiceToDelete.id}`);
                 fetchInvoices();
               } catch (error) {
                 console.error("Error deleting invoice:", error);

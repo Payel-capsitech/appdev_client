@@ -10,7 +10,8 @@ import {
   CommandBar,
   PrimaryButton,
 } from "@fluentui/react";
-import API from "../../../services/api";
+// import API from "../../../services/api";
+import useApi from "../../../services/api";
 
 interface HistoryProps {
   businessId: string;
@@ -39,6 +40,7 @@ export default function History({ businessId, refresh }: HistoryProps) {
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
+  const api = useApi();
 
   const getHistoryTypeLabel = (type: HistoryItem["type"]): string => {
     if (type === "Invoice" || type === 2) return "Invoice";
@@ -48,27 +50,32 @@ export default function History({ businessId, refresh }: HistoryProps) {
 
   const fetchHistories = useCallback(async () => {
     try {
-      const businessRes = await API.get(`/business/${businessId}/history`);
-      const businessData: HistoryItem[] = Array.isArray(businessRes.data) ? businessRes.data : [];
+      const businessRes = await api.get(`/business/${businessId}/history`);
+      const businessData: HistoryItem[] = Array.isArray(businessRes.data)
+        ? businessRes.data
+        : [];
 
       let invoiceData: HistoryItem[] = [];
 
-      const hasInvoice = businessData.some((item) => item.type === "Invoice" || item.type === 2);
+      const hasInvoice = businessData.some(
+        (item) => item.type === "Invoice" || item.type === 2
+      );
 
       if (!hasInvoice) {
-        const invoiceRes = await API.get(`/invoice/history/${businessId}`);
+        const invoiceRes = await api.get(`/invoice/history/${businessId}`);
         invoiceData = Array.isArray(invoiceRes.data) ? invoiceRes.data : [];
       }
 
       const merged = [...businessData, ...invoiceData];
-      merged.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      merged.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
       setHistories(merged);
     } catch (err) {
       console.error("History fetch error:", err);
       setHistories([]);
     }
   }, [businessId]);
-
 
   useEffect(() => {
     fetchHistories();
@@ -77,15 +84,20 @@ export default function History({ businessId, refresh }: HistoryProps) {
   const parseIcon = (desc: string) => {
     const lower = desc?.toLowerCase() ?? "";
 
-    if (lower.includes("created")) return { iconName: "Add", color: "#107C10", cleanText: desc };
-    if (lower.includes("updated")) return { iconName: "Edit", color: "#0078D4", cleanText: desc };
-    if (lower.includes("deleted")) return { iconName: "Delete", color: "#A80000", cleanText: desc };
+    if (lower.includes("created"))
+      return { iconName: "Add", color: "#107C10", cleanText: desc };
+    if (lower.includes("updated"))
+      return { iconName: "Edit", color: "#0078D4", cleanText: desc };
+    if (lower.includes("deleted"))
+      return { iconName: "Delete", color: "#A80000", cleanText: desc };
 
     return { iconName: "Info", color: "#605E5C", cleanText: desc };
   };
 
   const filtered = histories.filter((h) => {
-    const matchesSearch = h.description?.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = h.description
+      ?.toLowerCase()
+      .includes(search.toLowerCase());
     const date = new Date(h.date);
     const startMatch = fromDate ? date >= fromDate : true;
     const endMatch = toDate ? date <= toDate : true;
@@ -161,7 +173,13 @@ export default function History({ businessId, refresh }: HistoryProps) {
       <CommandBar
         items={commandBarItems}
         farItems={commandBarFarItems}
-        styles={{ root: { padding: 0, backgroundColor: "transparent", marginBottom: 12 } }}
+        styles={{
+          root: {
+            padding: 0,
+            backgroundColor: "transparent",
+            marginBottom: 12,
+          },
+        }}
       />
 
       {filtered.map((h) => {
@@ -177,18 +195,28 @@ export default function History({ businessId, refresh }: HistoryProps) {
               root: {
                 padding: 8,
                 borderRadius: 6,
-                borderBottom: "1px solid rgba(0, 0, 0, 0.1)"
+                borderBottom: "1px solid rgba(0, 0, 0, 0.1)",
               },
             }}
           >
-            <Stack horizontal tokens={{ childrenGap: 10 }} verticalAlign="center">
-              <Icon iconName={iconName} styles={{ root: {  color,fontSize: 16 } }} />
+            <Stack
+              horizontal
+              tokens={{ childrenGap: 10 }}
+              verticalAlign="center"
+            >
+              <Icon
+                iconName={iconName}
+                styles={{ root: { color, fontSize: 16 } }}
+              />
               <Text variant="smallPlus" styles={{ root: { fontWeight: 600 } }}>
                 <strong>{typeLabel}</strong> — {cleanText}
               </Text>
             </Stack>
 
-            <Text variant="small" styles={{ root: { marginTop: 4, color: "#666" } }}>
+            <Text
+              variant="small"
+              styles={{ root: { marginTop: 4, color: "#666" } }}
+            >
               {formattedDate} | By: {userName}
             </Text>
           </Stack>
@@ -196,7 +224,10 @@ export default function History({ businessId, refresh }: HistoryProps) {
       })}
 
       {filtered.length === 0 && (
-        <Text variant="small" styles={{ root: { marginTop: 10, color: "#888" } }}>
+        <Text
+          variant="small"
+          styles={{ root: { marginTop: 10, color: "#888" } }}
+        >
           No history found.
         </Text>
       )}

@@ -5,8 +5,9 @@ import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { Toolbar } from "./Toolbar";
 import { AddBusinessPanel } from "../business/AddBusinessPannel";
-import api from "../../services/api";
-
+// import api from "../../services/api";
+import useApi from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
 const useStyles = mergeStyleSets({
   root: {
@@ -40,53 +41,42 @@ const businessTypeEnumMap: Record<string, number> = {
 
 const DashboardLayout: React.FC = () => {
   const classes = useStyles;
+  const api = useApi();
   const location = useLocation();
   const hasFetchedRef = useRef(false);
   const [loadingBusinesses, setLoadingBusinesses] = useState(true);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [businesses, setBusinesses] = useState([]);
-  const [user, setUser] = useState<{
-    username: string;
-    email: string;
-    id: string;
-    role: string;
-  } | null>(null);
-
+  const { user, token, login } = useAuth();
   const fetchBusinesses = useCallback(async () => {
-  setLoadingBusinesses(true); 
-  try {
-    const token = localStorage.getItem("authToken");
-    const response = await api.get("/business/user-businesses", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setBusinesses(response.data);
-  } catch (error) {
-    console.error("Error fetching businesses", error);
-  } finally {
-    setLoadingBusinesses(false); 
-  }
-}, []);
-
-  const fetchUserDetails = useCallback(async () => {
+    setLoadingBusinesses(true);
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await api.get("/auth/userdetails", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setUser(response.data);
-      localStorage.setItem("user", JSON.stringify(response.data));
+      const response = await api.get("/business/user-businesses");
+      setBusinesses(response.data);
     } catch (error) {
-      console.error("Error fetching user details", error);
+      console.error("Error fetching businesses", error);
+    } finally {
+      setLoadingBusinesses(false);
     }
   }, []);
 
+  const fetchUserDetails = useCallback(async () => {
+    try {
+      const response = await api.get("/auth/userdetails");
+      if (token) {
+        login(token, response.data);
+      } else {
+        console.warn("No token available for login");
+      }
+    } catch (error) {
+      console.error("Error fetching user details", error);
+    }
+  }, [api, token, login]);
+
   const handleSearchBusinesses = async (query: string) => {
     try {
-      if(query==="") return;
-      const token = localStorage.getItem("authToken");
-      const response = await api.get(`/business/search?query=${query}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      if (query === "") return;
+      const response = await api.get(`/business/search?query=${query}`);
       setBusinesses(response.data);
     } catch (error) {
       console.error("Error searching businesses", error);
@@ -117,10 +107,7 @@ const DashboardLayout: React.FC = () => {
           street: newBusiness.street,
         },
       };
-
-      await api.post("/business/add", payload, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` },
-      });
+      await api.post("/business/add", payload);
 
       await fetchBusinesses();
     } catch (error) {
@@ -129,8 +116,8 @@ const DashboardLayout: React.FC = () => {
   };
 
   const isBusinessPage =
-  location.pathname.startsWith("/dashboard/business/") ||
-  location.pathname.startsWith("/dashboard/Invoices");
+    location.pathname.startsWith("/dashboard/business/") ||
+    location.pathname.startsWith("/dashboard/Invoices");
 
   return (
     <div className={classes.root}>
@@ -150,7 +137,14 @@ const DashboardLayout: React.FC = () => {
         )}
 
         <div className={classes.mainContent}>
-          <Outlet context={{ businesses, fetchBusinesses, loading: loadingBusinesses, user }} />
+          <Outlet
+            context={{
+              businesses,
+              fetchBusinesses,
+              loading: loadingBusinesses,
+              user,
+            }}
+          />
         </div>
 
         <AddBusinessPanel
